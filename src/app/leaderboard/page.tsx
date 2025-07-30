@@ -49,6 +49,8 @@ export default function LeaderboardPage() {
 
   const handleScoreSubmit = async (playerName: string, score: number) => {
     try {
+      console.log('Submitting score:', { playerName, score })
+      
       const response = await fetch('/api/leaderboard', {
         method: 'POST',
         headers: {
@@ -57,14 +59,25 @@ export default function LeaderboardPage() {
         body: JSON.stringify({ playerName, score }),
       })
 
+      console.log('Response status:', response.status)
+
       if (response.ok) {
+        const result = await response.json()
+        console.log('Score submitted successfully:', result)
         setShowSubmitForm(false)
         setLastScore(0)
         localStorage.removeItem('snakeLastScore')
         await fetchLeaderboard()
+        // Show success message
+        alert('Score submitted successfully! 🎉')
+      } else {
+        const errorText = await response.text()
+        console.error('Failed to submit score. Status:', response.status, 'Error:', errorText)
+        alert('Failed to submit score. Please try again.')
       }
     } catch (error) {
       console.error('Failed to submit score:', error)
+      alert('Failed to submit score. Please check your connection and try again.')
     }
   }
 

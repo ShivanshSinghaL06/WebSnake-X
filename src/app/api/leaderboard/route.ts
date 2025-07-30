@@ -1,17 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { PrismaClient } from '@prisma/client'
-
-// Create a new Prisma client instance for each request in production
-const prisma = new PrismaClient()
+import { neon } from '@neondatabase/serverless'
 
 export async function GET() {
   try {
-    const entries = await prisma.leaderboardEntry.findMany({
-      orderBy: {
-        score: 'desc'
-      },
-      take: 10
-    })
+    const sql = neon(process.env.DATABASE_URL!)
+    
+    const entries = await sql`
+      SELECT id, "playerName", score, timestamp, "createdAt", "updatedAt"
+      FROM leaderboard_entries 
+      ORDER BY score DESC 
+      LIMIT 10
+    `
     
     return NextResponse.json(entries)
   } catch (error) {
@@ -28,12 +27,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid data' }, { status: 400 })
     }
     
-    const entry = await prisma.leaderboardEntry.create({
-      data: {
-        playerName,
-        score
-      }
-    })
+    const sql = neon(process.env.DATABASE_URL!)
+    
+    const [entry] = await sql`
+      INSERT INTO leaderboard_entries (id, "playerName", score, timestamp, "createdAt", "updatedAt")
+      VALUES (gen_random_uuid(), ${playerName}, ${score}, NOW(), NOW(), NOW())
+      RETURNING id, "playerName", score, timestamp, "createdAt", "updatedAt"
+    `
     
     return NextResponse.json(entry)
   } catch (error) {
