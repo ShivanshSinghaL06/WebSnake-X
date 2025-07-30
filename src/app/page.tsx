@@ -12,6 +12,7 @@ import SoundToggle from '@/components/SoundToggle'
 import { ThemeToggle } from '@/components/ThemeToggle'
 import MobileControls from '@/components/MobileControls'
 import ClientOnly from '@/components/ClientOnly'
+import { Analytics } from '@vercel/analytics/next'
 
 export default function Home() {
   const [gameState, setGameState] = useState<'idle' | 'playing' | 'paused' | 'gameOver'>('idle')
@@ -277,6 +278,7 @@ export default function Home() {
             </CardContent>
           </Card>
         </ClientOnly>
+        <Analytics />
       </div>
     </div>
   )

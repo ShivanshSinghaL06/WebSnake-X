@@ -1,50 +1,43 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { db } from '@/lib/db'
+import { PrismaClient } from '@prisma/client'
+
+// Create a new Prisma client instance for each request in production
+const prisma = new PrismaClient()
 
 export async function GET() {
   try {
-    const leaderboard = await db.leaderboardEntry.findMany({
-      orderBy: [
-        { score: 'desc' },
-        { timestamp: 'asc' }
-      ],
-      take: 10 // Get top 10 scores
+    const entries = await prisma.leaderboardEntry.findMany({
+      orderBy: {
+        score: 'desc'
+      },
+      take: 10
     })
-
-    return NextResponse.json(leaderboard)
+    
+    return NextResponse.json(entries)
   } catch (error) {
-    console.error('Error fetching leaderboard:', error)
-    return NextResponse.json(
-      { error: 'Failed to fetch leaderboard' },
-      { status: 500 }
-    )
+    console.error('Failed to fetch leaderboard:', error)
+    return NextResponse.json({ error: 'Failed to fetch leaderboard' }, { status: 500 })
   }
 }
 
 export async function POST(request: NextRequest) {
   try {
     const { playerName, score } = await request.json()
-
+    
     if (!playerName || typeof score !== 'number') {
-      return NextResponse.json(
-        { error: 'Invalid input' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'Invalid data' }, { status: 400 })
     }
-
-    const newEntry = await db.leaderboardEntry.create({
+    
+    const entry = await prisma.leaderboardEntry.create({
       data: {
-        playerName: playerName.trim(),
+        playerName,
         score
       }
     })
-
-    return NextResponse.json(newEntry, { status: 201 })
+    
+    return NextResponse.json(entry)
   } catch (error) {
-    console.error('Error creating leaderboard entry:', error)
-    return NextResponse.json(
-      { error: 'Failed to create leaderboard entry' },
-      { status: 500 }
-    )
+    console.error('Failed to create leaderboard entry:', error)
+    return NextResponse.json({ error: 'Failed to create entry' }, { status: 500 })
   }
 }
